@@ -22,8 +22,12 @@ sibling(X, Y) :-
     X \= Y.         % exclude self-sibling matches
 
 % cousin(X, Y): a parent of X and a parent of Y are siblings.
-cousin(_, _) :-
-    throw(not_implemented(cousin/2)).
+cousin(X, Y) :-
+    parent(P1, X),      % bind P1 to a parent of X
+    parent(P2, Y),      % bind P2 to a parent of Y
+    sibling(P1, P2),    % require P1 and P2 to be siblings
+    X \= Y.             % prevent X from matching Y
+
 
 % descendant(D, A): A is an ancestor of D.
 %
