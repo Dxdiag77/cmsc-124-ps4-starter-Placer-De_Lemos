@@ -1,11 +1,109 @@
 # The Search and the Stack
 
-Replace this paragraph after your checks pass. Paste the output of `./trace`
-for one case. Then answer three questions about it.
+Using the P08 case, the trace is the following:
+```
+== trace P08 ==
+Call: ancestor(tom,X)
+  Call: parent(tom,X)
+  Exit: parent(tom,liz)
+Exit: ancestor(tom,liz)
+answer 1: X=liz
+Redo: ancestor(tom,liz)
+  Redo: parent(tom,liz)
+  Exit: parent(tom,bob)
+Exit: ancestor(tom,bob)
+answer 2: X=bob
+Redo: ancestor(tom,bob)
+  Redo: parent(tom,bob)
+  Fail: parent(tom,X)
+  Call: parent(tom,_)
+  Exit: parent(tom,liz)
+  Call: ancestor(liz,X)
+    Call: parent(liz,X)
+    Fail: parent(liz,X)
+    Call: parent(liz,_)
+    Fail: parent(liz,_)
+  Fail: ancestor(liz,X)
+  Redo: parent(tom,liz)
+  Exit: parent(tom,bob)
+  Call: ancestor(bob,X)
+    Call: parent(bob,X)
+    Exit: parent(bob,ann)
+  Exit: ancestor(bob,ann)
+Exit: ancestor(tom,ann)
+answer 3: X=ann
+Redo: ancestor(tom,ann)
+  Redo: ancestor(bob,ann)
+    Redo: parent(bob,ann)
+    Exit: parent(bob,pat)
+  Exit: ancestor(bob,pat)
+Exit: ancestor(tom,pat)
+answer 4: X=pat
+Redo: ancestor(tom,pat)
+  Redo: ancestor(bob,pat)
+    Redo: parent(bob,pat)
+    Fail: parent(bob,X)
+    Call: parent(bob,_)
+    Exit: parent(bob,ann)
+    Call: ancestor(ann,X)
+      Call: parent(ann,X)
+      Exit: parent(ann,sue)
+    Exit: ancestor(ann,sue)
+  Exit: ancestor(bob,sue)
+Exit: ancestor(tom,sue)
+answer 5: X=sue
+Redo: ancestor(tom,sue)
+  Redo: ancestor(bob,sue)
+    Redo: ancestor(ann,sue)
+      Redo: parent(ann,sue)
+      Fail: parent(ann,X)
+      Call: parent(ann,_)
+      Exit: parent(ann,sue)
+      Call: ancestor(sue,X)
+        Call: parent(sue,X)
+        Fail: parent(sue,X)
+        Call: parent(sue,_)
+        Fail: parent(sue,_)
+      Fail: ancestor(sue,X)
+      Redo: parent(ann,sue)
+      Fail: parent(ann,_)
+    Fail: ancestor(ann,X)
+    Redo: parent(bob,ann)
+    Exit: parent(bob,pat)
+    Call: ancestor(pat,X)
+      Call: parent(pat,X)
+      Exit: parent(pat,jim)
+    Exit: ancestor(pat,jim)
+  Exit: ancestor(bob,jim)
+Exit: ancestor(tom,jim)
+answer 6: X=jim
+Redo: ancestor(tom,jim)
+  Redo: ancestor(bob,jim)
+    Redo: ancestor(pat,jim)
+      Redo: parent(pat,jim)
+      Fail: parent(pat,X)
+      Call: parent(pat,_)
+      Exit: parent(pat,jim)
+      Call: ancestor(jim,X)
+        Call: parent(jim,X)
+        Fail: parent(jim,X)
+        Call: parent(jim,_)
+        Fail: parent(jim,_)
+      Fail: ancestor(jim,X)
+      Redo: parent(pat,jim)
+      Fail: parent(pat,_)
+    Fail: ancestor(pat,X)
+    Redo: parent(bob,pat)
+    Fail: parent(bob,_)
+  Fail: ancestor(bob,X)
+  Redo: parent(tom,bob)
+  Fail: parent(tom,_)
+Fail: ancestor(tom,X)
+== 6 answers ==
+```
+The `Call` lines in the trace represent frames being pushed onto the runtime stack from Activity 15. `Call: ancestor(tom,X)` starts the initial goal, and `Call: parent(tom,X)` starts another goal inside it. Each new call creates an active frame while Prolog evaluates that predicate. The `Exit` and `Fail` lines represent frames being popped. An `Exit` means the goal successfully returned, while a `Fail` means the goal could not find a solution. An example in the trace is: `Exit: parent(tom,liz)` shows that the parent predicate succeeded, followed by `Exit: ancestor(tom,liz)` when the ancestor predicate also succeeded.
 
-- Which of its lines push a frame onto Activity 15's runtime stack? Which
-  lines pop one?
-- What does a `Redo` line resume that a returned frame cannot?
-- Why does swapping the two clauses of `reach/2` change whether the search
-  ever answers, while swapping the two clauses of `ancestor/2` only changes
-  the order of the answers?
+A `Redo` line resumes a goal that already exited so Prolog can search for another possible answer. An example in the trace  is after finding `answer 1: X=liz`, the trace shows `Redo: ancestor(tom,liz)` followed by `Redo: parent(tom,liz)`. After that, Prolog then finds another parent, resulting in `answer 2: X=bob`. This is possible because Prolog maintains choice points that remember alternative solutions and the information needed to resume the search, including the bindings that must be restored. In Activity 15, a returned frame is already discarded, so it can’t provide more alternative solutions. A choice point allows Prolog to return to an earlier goal and continue searching instead of starting the entire query again.
+
+The difference between `reach/2` and `ancestor/2` is the relationships that their recursive clauses actually go through. The recursive clause of `reach/2` follows edges in a graph that contains a cycle: `a` connects to `b`, `b` connects to `c`, and `c` connects back to `a`. If the recursive clause is placed before the base clause, Prolog can repeatedly follow this cycle without reaching the base case. In contrast, `ancestor/2` follows parent relationships in a finite family hierarchy. Its recursive calls move through generations until they reach someone without a parent. The P08 trace demonstrates this when Prolog searches through `ancestor(bob,X)`, then `ancestor(ann,X)` and `ancestor(pat,X)`, eventually finding all six answers. Swapping the clauses of `ancestor/2` changes the order in which answers are found, but the search can still finish because the family relationships do not contain a cycle. Therefore, the clause order of `reach/2` can affect whether an answer is ever reached, while the clause order of `ancestor/2` only affects the order of its answers.
+
