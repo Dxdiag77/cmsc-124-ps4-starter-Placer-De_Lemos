@@ -16,8 +16,10 @@
 %
 % Order matters. X \= Y succeeds only when X and Y are already bound to
 % different things, so put it after the goal that binds them.
-sibling(_, _) :-
-    throw(not_implemented(sibling/2)).
+sibling(X, Y) :-
+    parent(P, X),   % bind P to a parent of X
+    parent(P, Y),   % find Y sharing the same parent P
+    X \= Y.         % exclude self-sibling matches
 
 % cousin(X, Y): a parent of X and a parent of Y are siblings.
 cousin(_, _) :-
